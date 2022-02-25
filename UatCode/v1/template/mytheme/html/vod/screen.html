@@ -44,7 +44,7 @@
 				{if $obj.type_extend.class||$obj.parent.type_extend.class}
 				<ul class="myui-screen__list{if $mytheme.type.screen_on} nav-slide{/if} clearfix" data-align="left">
 					<li>
-						<a class="btn text-muted">剧情</a>
+						<a class="btn text-muted">分类</a>
 					</li>
 					<li><a class="btn{if condition="$param['class'] eq ''"} btn-warm{/if}" href="{:mac_url_type($obj,['area'=>$param['area'],'lang'=>$param['lang'],'year'=>$param['year'],'level'=>$param['level'],'letter'=>$param['letter'],'state'=>$param['state'],'tag'=>$param['tag'],'class'=>'','order'=>$param['order'],'by'=>$param['by'] ],'show')}">全部</a></li>
 				    {empty name="$obj.type_extend.class"}
@@ -113,7 +113,7 @@
 				</ul>
 				{/if}
 
-				<ul class="myui-screen__list{if $mytheme.type.screen_on} nav-slide{/if} clearfix" data-align="left">
+				<!-- <ul class="myui-screen__list{if $mytheme.type.screen_on} nav-slide{/if} clearfix" data-align="left">
 					<li>
 						<a class="btn text-muted">字母</a>
 					</li>
@@ -121,7 +121,7 @@
 				    {maccms:foreach name=":explode(',','A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,0-9')" id="vo2" key="key2"}
 				    <li><a class="btn{if condition="$param['letter'] eq $vo2"} btn-warm{/if}" href="{:mac_url_type($obj,['area'=>$param['area'],'lang'=>$param['lang'],'year'=>$param['year'],'level'=>$param['level'],'letter'=>$vo2,'state'=>$param['state'],'tag'=>$param['tag'],'class'=>$param['class'],'order'=>$param['order'],'by'=>$param['by'] ],'show')}">{$vo2}</a></li>
 				    {/maccms:foreach}							
-				</ul>	
+				</ul>	 -->
 			</div>
 			
 			<ul class="myui-screen__list nav-slide clearfix" data-align="left">

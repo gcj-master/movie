@@ -1,6 +1,6 @@
 ## uat(vultr)    
 ip：149.28.22.163 
-root === A9U)oAP]SXAktA=(jWoAb  [qu A]
+root === A9U)oAP]SXAktA=(jWoAbA
 
 ## 部署说明
 1. 使用系统 centos7.6
