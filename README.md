@@ -33,6 +33,17 @@ root === A9U)oAP]SXAktA=(jWoAbA
 把其中的STRICT_TRANS_TABLES,去掉,或者把sqlmode=STRICT_TRANS_TABLES,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION
 注释掉，然后重启mysql就ok了
 
+## 添加定时任务
+1. 现在后台管理系统，定时任务配置采集任务
+2. 在linux系统添加定时任务    
+ crontab -e
+ 编辑 0 */4 * * * /bin/bash /home/wwwroot/www.feimaoyingshi.com/task/collection_task.sh   //每隔4小时采集一次    
+ 常用命令：    
+ crontab –l : 显示 crontab 任务    
+ crontab -r : 删除 crontab 任务    
+ 参考 https://www.cnblogs.com/wucaiyun1/p/6866730.html    
+
+
 
 ## 未完成事项
 1. 手机端横屏播放
