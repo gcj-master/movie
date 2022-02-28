@@ -41,6 +41,7 @@ root === A9U)oAP]SXAktA=(jWoAbA
  常用命令：    
  crontab –l : 显示 crontab 任务    
  crontab -r : 删除 crontab 任务    
+ systemctl status crond //查看crontab状态
  参考 https://www.cnblogs.com/wucaiyun1/p/6866730.html    
 
 
