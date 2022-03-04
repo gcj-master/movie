@@ -2437,6 +2437,10 @@ function mac_url_type($info,$param=[],$flag='type')
     else if($info['type_mid'] == 2) {
         $tab ='art';
     }
+    else if($info['type_mid'] == 3) { //Alan 新增
+        $tab ='topic';
+        $flag='index';
+    }
     else if($info['type_mid'] == 8) {
         $tab ='actor';
     }
