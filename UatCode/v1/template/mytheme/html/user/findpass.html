@@ -38,10 +38,12 @@
 									<input type="password" id="user_pwd2" name="user_pwd2" class="form-control" placeholder="请输入您的确认密码">
 								</li>
 								<li>
-									<button type="button" id="btn_submit" class="btn btn-lg btn-block btn-primary">立即登录</button>
+									<button type="button" id="btn_submit" class="btn btn-lg btn-block btn-primary">确定</button>
 								</li>
 								<li class="text-center">
-									<a href="{:mac_url('user/login')}">登录账号</a><span class="split-line"></span><a href="{:mac_url('user/findpass_msg')}?ac=email">用邮箱找回</a><span class="split-line"></span><a href="{:mac_url('user/findpass_msg')}?ac=phone">用手机找回</a>
+									<a href="{:mac_url('user/login')}">登录账号</a><span class="split-line"></span>
+									<!-- <a href="{:mac_url('user/findpass_msg')}?ac=email">用邮箱找回</a><span class="split-line"></span>
+									<a href="{:mac_url('user/findpass_msg')}?ac=phone">用手机找回</a> -->
 								</li>
 							</form>
 						</ul>			
@@ -60,8 +62,12 @@
 		});
 		$('#btn_submit').click(function() {
 			if ($('#user_name').val()  == '') { alert('请输入用户！'); $("#user_name").focus(); return false; }
-			if ($('#user_pwd').val()  == '') { alert('请输入密码！'); $("#user_pwd").focus(); return false; }
-			if ($('#verify').val()  == '') { alert('请输入验证码！'); $("#verify").focus(); return false; }
+			if ($('#user_question').val()  == '') { alert('请输入密码找回问题！'); $("#user_question").focus(); return false; }
+			if ($('#user_answer').val()  == '') { alert('请输入密码找回答案！'); $("#user_answer").focus(); return false; }
+
+			if ($('#user_pwd').val()  == '') { alert('请输入新密码！'); $("#user_pwd").focus(); return false; }
+			if ($('#user_pwd2').val()  == '') { alert('请输入确认密码！'); $("#user_pwd2").focus(); return false; }
+			if ($('#user_pwd').val()  != $('#user_pwd2').val() ) { alert('二次密码不一致！'); $("#user_pwd2").focus(); return false; }
 
 			$.ajax({
 				url: "{:mac_url('user/findpass')}",
@@ -73,15 +79,12 @@
 				},
 				success: function (r) {
 					if(r.code==1){
+						alert("修改成功!");
 						location.href="{:mac_url('user/index')}";
 					}
 					else{
 						alert(r.msg);
 					}
-				},
-				complete: function () {
-					$('#verify').click();
-					$("#btn_submit").css("background","#fa4646").val("立即找回");
 				}
 			});
 

@@ -484,15 +484,15 @@ class User extends Base
         $data['user_answer'] = htmlspecialchars(urldecode(trim($param['user_answer'])));
         $data['user_pwd'] = htmlspecialchars(urldecode(trim($param['user_pwd'])));
         $data['user_pwd2'] = htmlspecialchars(urldecode(trim($param['user_pwd2'])));
-        $data['verify'] = $param['verify'];
+        // $data['verify'] = $param['verify'];
 
-        if (empty($data['user_name']) || empty($data['user_question']) || empty($data['user_answer']) || empty($data['user_pwd']) || empty($data['user_pwd2']) || empty($data['verify'])) {
+        if (empty($data['user_name']) || empty($data['user_question']) || empty($data['user_answer']) || empty($data['user_pwd']) || empty($data['user_pwd2'])) {
             return ['code' => 1001, 'msg' => lang('param_err')];
         }
 
-        if (!captcha_check($data['verify'])) {
-            return ['code' => 1002, 'msg' => lang('verify_err')];
-        }
+        // if (!captcha_check($data['verify'])) {
+        //     return ['code' => 1002, 'msg' => lang('verify_err')];
+        // }
 
         if ($data['user_pwd'] != $data['user_pwd2']) {
             return ['code' => 1003, 'msg' => lang('model/user/pass_not_same_pass2')];
