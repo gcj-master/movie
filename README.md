@@ -8,7 +8,7 @@ root === A9U)oAP]SXAktA=(jWoAbA
    先安装 yum install screen  
    上传lnmp1.8的压缩包 到/root  (http://175.6.32.4:88/soft/lnmp/lnmp1.8-full.tar.gz)
    上传静态文件 maccms.conf 到 /usr/local/nginx/conf/rewrite  
-   运行：screen -S lnmp 
+   运行：screen -S lnmp    
     tar zxf lnmp1.8-full.tar.gz && cd lnmp1.8-full && ./install.sh lnmp 
 
 3.  创建网站  https://lnmp.org/faq/lnmp-vhost-add-howto.html  
