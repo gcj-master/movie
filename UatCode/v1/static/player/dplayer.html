@@ -59,6 +59,19 @@
 		//document.getElementById('playerCnt').style.height = parent.MacPlayer.Height + 'px';
 	}
 	catch(e){}
+
+    //手机全屏自动横屏
+    var isMobile = !!navigator.userAgent.match(/AppleWebKit.*Mobile.*/);
+    if (isMobile) {
+        //全屏事件
+        dp.on('fullscreen',function() {
+            screen.orientation.lock("landscape");
+        });
+        //退出全屏事件
+        dp.on('fullscreen_cancel',function() {
+            screen.orientation.unlock();
+        });
+    }
 </script>
 </body>
 </html>

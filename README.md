@@ -44,11 +44,24 @@ root === A9U)oAP]SXAktA=(jWoAbA
  systemctl status crond //查看crontab状态
  参考 https://www.cnblogs.com/wucaiyun1/p/6866730.html    
 
-
+# 关于移动端手机横屏手机
+1. 默认使用m38u的资源，m38u资源可以使用本地播放器，添加播放器的方法 https://www.mytheme.cn/article/363.html, 默认使用DPlayer-H5播放器。关于手机不能横屏的解决方法 https://github.com/DIYgod/DPlayer/issues/429    
+```javascript
+//手机全屏自动横屏
+var isMobile = !!navigator.userAgent.match(/AppleWebKit.*Mobile.*/);
+if (isMobile) {
+    //全屏事件
+    dp.on('fullscreen',function() {
+        screen.orientation.lock("landscape");
+    });
+    //退出全屏事件
+    dp.on('fullscreen_cancel',function() {
+        screen.orientation.unlock();
+    });
+}
+```
 
 ## 未完成事项
-1. 手机端横屏播放
-2. 网站Logo PC和移动端  网站图标ico
 3. 广告投放测试
 
 ## 其他事项
