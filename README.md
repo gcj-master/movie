@@ -1,7 +1,6 @@
 ## uat(vultr)    
 ip：149.28.22.163 
-root === A9U)oAP]SXAktA=(jWoAbA
-
+root === A9U)oP]SXktA=(jWoAbA
 ## 部署说明
 1. 使用系统 centos7.6
 2. 使用lnmp继承环境 https://lnmp.org/install.html    
@@ -36,8 +35,18 @@ root === A9U)oAP]SXAktA=(jWoAbA
 ## 添加定时任务
 1. 现在后台管理系统，定时任务配置采集任务
 2. 在linux系统添加定时任务    
- crontab -e
- 编辑 0 */4 * * * /bin/bash /home/wwwroot/www.feimaoyingshi.com/task/collection_task.sh   //每隔4小时采集一次    
+3. 需要安装 yum install expect
+4. 需要在生产服务器往备份服务器发送一次文件，添加ssh缓存
+查看任务 crontab -e
+//采集任务每天6点 12点 22点
+00 6 * * * /bin/bash /home/wwwroot/www.feimaoyingshi.com/task/collection_task.sh   
+00 12 * * * /bin/bash /home/wwwroot/www.feimaoyingshi.com/task/collection_task.sh   
+00 22 * * * /bin/bash /home/wwwroot/www.feimaoyingshi.com/task/collection_task.sh   
+//数据库备份任务每天凌晨1点执行
+00 1 * * * /bin/bash /home/wwwroot/www.feimaoyingshi.com/task/data_backup.sh
+//图片备份任务每周二、四、六凌晨2点执行
+00 2 * * 2,4,6 /bin/bash /home/wwwroot/www.feimaoyingshi.com/task/upload_backup.sh   
+
  常用命令：    
  crontab –l : 显示 crontab 任务    
  crontab -r : 删除 crontab 任务    
@@ -61,11 +70,6 @@ if (isMobile) {
 }
 ```
 
-## 未完成事项
-3. 广告投放测试
-
-## 其他事项
-1. 统计代码使用 统计 https://analytics.google.com
 
 
 
