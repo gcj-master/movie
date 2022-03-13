@@ -32,7 +32,7 @@ expect {
 	# 接受密钥认证
 	# 输入密码
 	"*assword:" {
-		send "${password}\r"
+		send "${password}\n"
 	}
 }
 # 等待传输完成
