@@ -19,7 +19,12 @@ class Vod extends Base {
 
     public function countData($where)
     {
-        $total = $this->where($where)->count();
+        $where2='';
+        if(!empty($where['_string'])){
+            $where2 = $where['_string'];
+            unset($where['_string']);
+        }
+        $total = $this->where($where)->where($where2)->count();
         return $total;
     }
 
@@ -36,7 +41,7 @@ class Vod extends Base {
 
         $limit_str = ($limit * ($page-1) + $start) .",".$limit;
         if($totalshow==1) {
-            $total = $this->where($where)->count();
+            $total = $this->where($where)->where($where2)->count();
         }
 
         $list = Db::name('Vod')->field($field)->where($where)->where($where2)->order($order)->limit($limit_str)->select();
@@ -393,27 +398,61 @@ class Vod extends Base {
             $where['vod_isend'] = $isend;
         }
 
-        if(!empty($wd)) {
-            $role = 'vod_name';
-            if(!empty($GLOBALS['config']['app']['search_vod_rule'])){
-                $role .= '|'.$GLOBALS['config']['app']['search_vod_rule'];
+        $vod_search = model('VodSearch');
+        $vod_search_enabled = $vod_search->isFrontendEnabled();
+        if ($vod_search_enabled) {
+            // 开启搜索优化，查询并缓存Id
+            $search_id_list = [];
+            if(!empty($wd)) {
+                $role = 'vod_name';
+                if(!empty($GLOBALS['config']['app']['search_vod_rule'])){
+                    $role .= '|'.$GLOBALS['config']['app']['search_vod_rule'];
+                }
+                $search_id_list += $vod_search->getResultIdList($wd, $role);
             }
-            $where[$role] = ['like', '%' . $wd . '%'];
-        }
-        if(!empty($name)) {
-            $where['vod_name'] = ['like',mac_like_arr($name),'OR'];
-        }
-        if(!empty($tag)) {
-            $where['vod_tag'] = ['like',mac_like_arr($tag),'OR'];
-        }
-        if(!empty($class)) {
-            $where['vod_class'] = ['like',mac_like_arr($class), 'OR'];
-        }
-        if(!empty($actor)) {
-            $where['vod_actor'] = ['like', mac_like_arr($actor), 'OR'];
-        }
-        if(!empty($director)) {
-            $where['vod_director'] = ['like',mac_like_arr($director),'OR'];
+            if(!empty($name)) {
+                $search_id_list += $vod_search->getResultIdList($name, 'vod_name');
+            }
+            if(!empty($tag)) {
+                $search_id_list += $vod_search->getResultIdList($tag, 'vod_tag', true);
+            }
+            if(!empty($class)) {
+                $search_id_list += $vod_search->getResultIdList($class, 'vod_class', true);
+            }
+            if(!empty($actor)) {
+                $search_id_list += $vod_search->getResultIdList($actor, 'vod_actor', true);
+            }
+            if(!empty($director)) {
+                $search_id_list += $vod_search->getResultIdList($director, 'vod_director', true);
+            }
+            $search_id_list = array_unique($search_id_list);
+            if (!empty($search_id_list)) {
+                $where['_string'] = "vod_id IN (" . join(',', $search_id_list) . ")";
+            }
+        } else {
+            // 不开启搜索优化，使用默认条件
+            if(!empty($wd)) {
+                $role = 'vod_name';
+                if(!empty($GLOBALS['config']['app']['search_vod_rule'])){
+                    $role .= '|'.$GLOBALS['config']['app']['search_vod_rule'];
+                }
+                $where[$role] = ['like', '%' . $wd . '%'];
+            }
+            if(!empty($name)) {
+                $where['vod_name'] = ['like',mac_like_arr($name),'OR'];
+            }
+            if(!empty($tag)) {
+                $where['vod_tag'] = ['like',mac_like_arr($tag),'OR'];
+            }
+            if(!empty($class)) {
+                $where['vod_class'] = ['like',mac_like_arr($class), 'OR'];
+            }
+            if(!empty($actor)) {
+                $where['vod_actor'] = ['like', mac_like_arr($actor), 'OR'];
+            }
+            if(!empty($director)) {
+                $where['vod_director'] = ['like',mac_like_arr($director),'OR'];
+            }
         }
         if(in_array($plot,['0','1'])){
             $where['vod_plot'] = $plot;
@@ -615,7 +654,32 @@ class Vod extends Base {
         unset($data['uptime']);
         unset($data['uptag']);
 
-        // xss过滤、长度裁剪
+        $data = $this->formatDataBeforeDb($data);
+        if(!empty($data['vod_id'])){
+            $where=[];
+            $where['vod_id'] = ['eq',$data['vod_id']];
+            $res = $this->allowField(true)->where($where)->update($data);
+        }
+        else{
+            $data['vod_plot'] = 0;
+            $data['vod_plot_name']='';
+            $data['vod_plot_detail']='';
+            $data['vod_time_add'] = time();
+            $data['vod_time'] = time();
+            $res = $this->allowField(true)->insert($data, false, true);
+            if ($res > 0 && model('VodSearch')->isFrontendEnabled()) {
+                model('VodSearch')->checkAndUpdateTopResults(['vod_id' => $res] + $data);
+            }
+        }
+        if(false === $res){
+            return ['code'=>1002,'msg'=>lang('save_err').'：'.$this->getError() ];
+        }
+        return ['code'=>1,'msg'=>lang('save_ok')];
+    }
+
+    // xss过滤、长度裁剪
+    public function formatDataBeforeDb($data)
+    {
         $filter_fields = [
             'vod_name'         => 255,
             'vod_sub'          => 255,
@@ -668,26 +732,9 @@ class Vod extends Base {
                 continue;
             }
             $data[$filter_field] = mac_filter_xss($data[$filter_field]);
-            $data[$filter_field] = mac_substring($data[$filter_field], $field_length);
+            $data[$filter_field] = mb_substr($data[$filter_field], 0, $field_length);
         }
-
-        if(!empty($data['vod_id'])){
-            $where=[];
-            $where['vod_id'] = ['eq',$data['vod_id']];
-            $res = $this->allowField(true)->where($where)->update($data);
-        }
-        else{
-            $data['vod_plot'] = 0;
-            $data['vod_plot_name']='';
-            $data['vod_plot_detail']='';
-            $data['vod_time_add'] = time();
-            $data['vod_time'] = time();
-            $res = $this->allowField(true)->insert($data);
-        }
-        if(false === $res){
-            return ['code'=>1002,'msg'=>lang('save_err').'：'.$this->getError() ];
-        }
-        return ['code'=>1,'msg'=>lang('save_ok')];
+        return $data;
     }
 
     public function savePlot($data)

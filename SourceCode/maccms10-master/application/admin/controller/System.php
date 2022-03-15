@@ -92,6 +92,7 @@ class System extends Base
 
             $config['app']['search_vod_rule'] = join('|', $config['app']['search_vod_rule']);
             $config['app']['search_art_rule'] = join('|', $config['app']['search_art_rule']);
+            $config['app']['vod_search_optimise'] = join('|', $config['app']['vod_search_optimise']);
 
             $config['extra'] = [];
             if(!empty($config['app']['extra_var'])){
@@ -151,6 +152,10 @@ class System extends Base
         // 默认get+post
         if (!isset($config['app']['input_type'])) {
             $config['app']['input_type'] = 1;
+        }
+        // 视频搜索优化，默认frontend
+        if (!isset($config['app']['vod_search_optimise'])) {
+            $config['app']['vod_search_optimise'] = 'frontend';
         }
         $this->assign('config', $config);
         $this->assign('title', lang('admin/system/config/title'));
@@ -618,6 +623,7 @@ class System extends Base
 
             $config_new['collect']['vod']['namewords'] = mac_replace_text($config_new['collect']['vod']['namewords'], 2);
             $config_new['collect']['vod']['thesaurus'] = mac_replace_text($config_new['collect']['vod']['thesaurus'], 2);
+            $config_new['collect']['vod']['playerwords'] = mac_replace_text($config_new['collect']['vod']['playerwords'], 2);
             $config_new['collect']['vod']['words'] = mac_replace_text($config_new['collect']['vod']['words'], 2);
             $config_new['collect']['art']['thesaurus'] = mac_replace_text($config_new['collect']['art']['thesaurus'], 2);
             $config_new['collect']['art']['words'] = mac_replace_text($config_new['collect']['art']['words'], 2);

@@ -181,11 +181,11 @@ class Provide extends Base
 
                 if (!empty($GLOBALS['config']['api']['vod']['typefilter'])){
                     if(in_array($v['type_id'],$typefilter)) {
-                        $class[] = ['type_id' => $v['type_id'], 'type_name' => $v['type_name']];
+                        $class[] = ['type_id' => $v['type_id'], 'type_pid' => $v['type_pid'], 'type_name' => $v['type_name']];
                     }
                 }
                 else {
-                    $class[] = ['type_id' => $v['type_id'], 'type_name' => $v['type_name']];
+                    $class[] = ['type_id' => $v['type_id'], 'type_pid' => $v['type_pid'], 'type_name' => $v['type_name']];
                 }
             }
             $res['class'] = $class;
@@ -342,7 +342,7 @@ class Provide extends Base
                 $v['art_time'] = date('Y-m-d H:i:s', $v['art_time']);
 
                 if (substr($v["art_pic"], 0, 4) == "mac:") {
-                    $v["art_pic"] = str_replace('mac:', 'http:', $v["art_pic"]);
+                    $v["art_pic"] = str_replace('mac:', $this->getImgUrlProtocol('art'), $v["art_pic"]);
                 } elseif (!empty($v["art_pic"]) && substr($v["art_pic"], 0, 4) != "http" && substr($v["art_pic"], 0, 2) != "//") {
                     $v["art_pic"] = $GLOBALS['config']['api']['art']['imgurl'] . $v["art_pic"];
                 }
@@ -363,10 +363,10 @@ class Provide extends Base
 
                         if (!empty($GLOBALS['config']['api']['art']['typefilter'])) {
                             if (in_array($v['type_id'], $typefilter)) {
-                                $class[] = ['type_id' => $v['type_id'], 'type_name' => $v['type_name']];
+                                $class[] = ['type_id' => $v['type_id'], 'type_pid' => $v['type_pid'], 'type_name' => $v['type_name']];
                             }
                         } else {
-                            $class[] = ['type_id' => $v['type_id'], 'type_name' => $v['type_name']];
+                            $class[] = ['type_id' => $v['type_id'], 'type_pid' => $v['type_pid'], 'type_name' => $v['type_name']];
                         }
                     }
                 }
@@ -453,7 +453,7 @@ class Provide extends Base
                 $v['actor_time'] = date('Y-m-d H:i:s', $v['actor_time']);
 
                 if (substr($v["actor_pic"], 0, 4) == "mac:") {
-                    $v["actor_pic"] = str_replace('mac:', 'http:', $v["actor_pic"]);
+                    $v["actor_pic"] = str_replace('mac:', $this->getImgUrlProtocol('actor'), $v["actor_pic"]);
                 } elseif (!empty($v["actor_pic"]) && substr($v["actor_pic"], 0, 4) != "http" && substr($v["actor_pic"], 0, 2) != "//") {
                     $v["actor_pic"] = $GLOBALS['config']['api']['actor']['imgurl'] . $v["actor_pic"];
                 }
@@ -474,10 +474,10 @@ class Provide extends Base
 
                         if (!empty($GLOBALS['config']['api']['actor']['typefilter'])) {
                             if (in_array($v['type_id'], $typefilter)) {
-                                $class[] = ['type_id' => $v['type_id'], 'type_name' => $v['type_name']];
+                                $class[] = ['type_id' => $v['type_id'], 'type_pid' => $v['type_pid'], 'type_name' => $v['type_name']];
                             }
                         } else {
-                            $class[] = ['type_id' => $v['type_id'], 'type_name' => $v['type_name']];
+                            $class[] = ['type_id' => $v['type_id'], 'type_pid' => $v['type_pid'], 'type_name' => $v['type_name']];
                         }
                     }
                 }
@@ -565,7 +565,7 @@ class Provide extends Base
                 $v['vod_director'] = $v['data']['vod_director'];
                 unset($v['data']);
                 if (substr($v["role_pic"], 0, 4) == "mac:") {
-                    $v["role_pic"] = str_replace('mac:', 'http:', $v["role_pic"]);
+                    $v["role_pic"] = str_replace('mac:', $this->getImgUrlProtocol('role'), $v["role_pic"]);
                 } elseif (!empty($v["role_pic"]) && substr($v["role_pic"], 0, 4) != "http" && substr($v["role_pic"], 0, 2) != "//") {
                     $v["role_pic"] = $GLOBALS['config']['api']['role']['imgurl'] . $v["role_pic"];
                 }
@@ -665,7 +665,7 @@ class Provide extends Base
                 $v['website_time'] = date('Y-m-d H:i:s', $v['website_time']);
 
                 if (substr($v["website_pic"], 0, 4) == "mac:") {
-                    $v["website_pic"] = str_replace('mac:', 'http:', $v["website_pic"]);
+                    $v["website_pic"] = str_replace('mac:', $this->getImgUrlProtocol('website'), $v["website_pic"]);
                 } elseif (!empty($v["website_pic"]) && substr($v["website_pic"], 0, 4) != "http" && substr($v["website_pic"], 0, 2) != "//") {
                     $v["website_pic"] = $GLOBALS['config']['api']['website']['imgurl'] . $v["website_pic"];
                 }
@@ -686,10 +686,10 @@ class Provide extends Base
 
                         if (!empty($GLOBALS['config']['api']['website']['typefilter'])) {
                             if (in_array($v['type_id'], $typefilter)) {
-                                $class[] = ['type_id' => $v['type_id'], 'type_name' => $v['type_name']];
+                                $class[] = ['type_id' => $v['type_id'], 'type_pid' => $v['type_pid'], 'type_name' => $v['type_name']];
                             }
                         } else {
-                            $class[] = ['type_id' => $v['type_id'], 'type_name' => $v['type_name']];
+                            $class[] = ['type_id' => $v['type_id'], 'type_pid' => $v['type_pid'], 'type_name' => $v['type_name']];
                         }
                     }
                 }
@@ -730,5 +730,16 @@ class Provide extends Base
             echo lang('api/auth_err');
             exit;
         }
+    }
+
+    private function getImgUrlProtocol($key)
+    {
+        if (!isset($GLOBALS['config']['api'][$key]['imgurl'])) {
+            return 'http:';
+        }
+        if (substr($GLOBALS['config']['api'][$key]['imgurl'], 0, 5) == 'https') {
+            return 'https:';
+        }
+        return 'http:';
     }
 }

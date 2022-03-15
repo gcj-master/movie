@@ -890,12 +890,21 @@ function mac_rep_pse_rnd($psearr,$txt,$id=0)
     return $res;
 }
 
-function mac_txt_explain($txt)
+function mac_txt_explain($txt, $decode = false)
 {
     $txtarr = explode('#',$txt);
     $data=[];
-    foreach($txtarr as $k=>$v){
-        list($from, $to) = explode('=', $v);
+    foreach($txtarr as $v){
+        if (stripos($v, '=') === false) {
+            continue;
+        }
+        list($from, $to) = explode('=', $v, 2);
+        if ($decode === true && stripos($from, '&') !== false && stripos($from, ';') !== false) {
+            $from = html_entity_decode($from, ENT_QUOTES, 'UTF-8');
+        }
+        if ($decode === true && stripos($to, '&') !== false && stripos($to, ';') !== false) {
+            $to = html_entity_decode($to, ENT_QUOTES, 'UTF-8');
+        }
         $data['from'][] = $from;
         $data['to'][] = $to;
     }
@@ -1248,10 +1257,11 @@ function mac_array_check_num($arr)
 function mac_like_arr($s)
 {
     $tmp = explode(',',$s);
-    foreach($tmp as $k=>$v){
-        $tmp[$k] = '%'.$v.'%';
+    $like_arr = [];
+    foreach($tmp as $v){
+        $like_arr[] = '%'.$v.'%';
     }
-    return $tmp;
+    return $like_arr;
 }
 
 function mac_art_list($art_title,$art_note,$art_content)
@@ -1615,6 +1625,7 @@ function mac_url_img($url)
     }
     $url = mac_filter_xss($url);
     $url = str_replace('&quot;&gt;', '', $url);
+    $url = str_replace('&amp;', '&', $url);
     return $url;
 }
 

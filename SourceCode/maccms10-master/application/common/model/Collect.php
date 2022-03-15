@@ -315,12 +315,12 @@ class Collect extends Base {
         }
         $html = mac_curl_get($url);
         if(empty($html)){
-            return ['code'=>1001, 'msg'=>lang('model/collect/get_html_err')];
+            return ['code'=>1001, 'msg'=>lang('model/collect/get_html_err') . ', url: ' . $url];
         }
         $html = mac_filter_tags($html);
         $json = json_decode($html,true);
         if(!$json){
-            return ['code'=>1002, 'msg'=>lang('model/collect/json_err')];
+            return ['code'=>1002, 'msg'=>lang('model/collect/json_err') . ', url: ' . $url . ', response: ' . mb_substr($html, 0, 15)];
         }
 
         $array_page = [];
@@ -391,13 +391,14 @@ class Collect extends Base {
      */
     private function syncImages($pic_status,$pic_url,$flag='vod')
     {
+        $config = (array)config('maccms.upload');
         if($pic_status == 1){
-            $img_url = model('Image')->down_load($pic_url, $GLOBALS['config']['upload'], $flag);
+            $img_url = model('Image')->down_load($pic_url, $config, $flag);
             if(substr($img_url,0,7)=='upload/'){
                 $link = MAC_PATH . $img_url;
             }
             else{
-                $link = str_replace('mac:', $GLOBALS['config']['upload']['protocol'].':', $img_url);
+                $link = str_replace('mac:', $config['protocol'].':', $img_url);
             }
             if ($img_url == $pic_url) {
                 $des = '<a href="' . $pic_url . '" target="_blank">' . $pic_url . '</a><font color=red>'.lang('download_err').'!</font>';
@@ -420,12 +421,17 @@ class Collect extends Base {
         $config_sync_pic = $param['sync_pic_opt'] > 0 ? $param['sync_pic_opt'] : $config['pic'];
         $players = config('vodplayer');
         $downers = config('voddowner');
+        $vod_search = model('VodSearch');
+        $vod_search_enabled = $vod_search->isCollectEnabled();
 
         $type_list = model('Type')->getCache('type_list');
-        $filter_arr = explode(',',$config['filter']); $filter_arr = array_filter($filter_arr);
-        $pse_rnd = explode('#',$config['words']); $pse_rnd = array_filter($pse_rnd);
-        $pse_name =  mac_txt_explain($config['namewords']);
-        $pse_syn = mac_txt_explain($config['thesaurus']);
+        $filter_arr = explode(',',$config['filter']);
+        $filter_arr = array_filter($filter_arr);
+        $pse_rnd = explode('#',$config['words']);
+        $pse_rnd = array_filter($pse_rnd);
+        $pse_name = mac_txt_explain($config['namewords'], true);
+        $pse_syn = mac_txt_explain($config['thesaurus'], true);
+        $pse_player = mac_txt_explain($config['playerwords'], true);
 
         foreach($data['data'] as $k=>$v){
             $color='red';
@@ -533,6 +539,9 @@ class Collect extends Base {
                 if ($config['psesyn'] == 1) {
                     $v['vod_content'] = mac_rep_pse_syn($pse_syn, $v['vod_content']);
                 }
+                if ($config['pseplayer'] == 1) {
+                    $v['vod_play_from'] = mac_rep_pse_syn($pse_player, $v['vod_play_from']);
+                }
 
                 if(empty($v['vod_blurb'])){
                     $v['vod_blurb'] = mac_substring( strip_tags($v['vod_content']) ,100);
@@ -553,8 +562,13 @@ class Collect extends Base {
                 if (strpos($config['inrule'], 'e')!==false) {
                     $where['vod_lang'] = $v['vod_lang'];
                 }
+                $search_actor_id_list = [];
                 if (strpos($config['inrule'], 'f')!==false) {
                     $where['vod_actor'] = ['like', mac_like_arr($v['vod_actor']), 'OR'];
+                    if ($vod_search_enabled) {
+                        $search_actor_id_list = $vod_search->getResultIdList($v['vod_actor'], 'vod_actor', true);
+                        $search_actor_id_list = empty($search_actor_id_list) ? [0] : $search_actor_id_list;
+                    }
                 }
                 if (strpos($config['inrule'], 'g')!==false) {
                     $where['vod_director'] = $v['vod_director'];
@@ -566,9 +580,14 @@ class Collect extends Base {
                 if(!empty($where['vod_actor']) && !empty($where['vod_director'])){
                     $blend = true;
                     $GLOBALS['blend'] = [
-                        'vod_actor' => $where['vod_actor'],
-                        'vod_director' => $where['vod_director']
+                        'vod_actor'    => $where['vod_actor'],
+                        'vod_director' => $where['vod_director'],
                     ];
+                    // 结果太大时，筛选更耗时。仅在结果数量较小时，才加入
+                    $GLOBALS['blend']['vod_id'] = null;
+                    if ($vod_search_enabled && count($search_actor_id_list) < 1000) {
+                        $GLOBALS['blend']['vod_id'] = ['IN', $search_actor_id_list];
+                    }
                     unset($where['vod_actor'],$where['vod_director']);
                 }
 
@@ -663,13 +682,16 @@ class Collect extends Base {
                 }
                 else{
                     $info = model('Vod')->where($where)
-                        ->where(function($query){
-                            $query->where('vod_director',$GLOBALS['blend']['vod_director'])
-                                    ->whereOr('vod_actor',$GLOBALS['blend']['vod_actor']);
+                        ->where(function($query) {
+                            $query->where('vod_director',$GLOBALS['blend']['vod_director']);
+                            if (!empty($GLOBALS['blend']['vod_id'])) {
+                                $query->whereOr('vod_id', $GLOBALS['blend']['vod_id']);
+                            } else {
+                                $query->whereOr('vod_actor', $GLOBALS['blend']['vod_actor']);
+                            }
                         })
                         ->find();
                 }
-
 
                 if (!$info) {
                     // 新增
@@ -690,12 +712,16 @@ class Collect extends Base {
                         $tmp = $this->syncImages($config_sync_pic,  $v['vod_pic'], 'vod');
                         $v['vod_pic'] = mac_filter_xss((string)$tmp['pic']);
                         $msg = $tmp['msg'];
-                        $res = model('Vod')->insert($v);
-                        if ($res === false) {
-
+                        $v = model('Vod')->formatDataBeforeDb($v);
+                        $vod_id = model('Vod')->insert($v, false, true);
+                        if ($vod_id > 0) {
+                            $vod_search_enabled && $vod_search->checkAndUpdateTopResults(['vod_id' => $vod_id] + $v, true);
+                            $color = 'green';
+                            $des = lang('model/collect/add_ok');
+                        } else {
+                            $color = 'red';
+                            $des = 'vod insert failed';
                         }
-                        $color = 'green';
-                        $des = lang('model/collect/add_ok');
                     }
                 } else {
                     // 更新
@@ -913,6 +939,7 @@ class Collect extends Base {
                             $update['vod_time'] = time();
                             $where = [];
                             $where['vod_id'] = $info['vod_id'];
+                            $update = model('Vod')->formatDataBeforeDb($update);
                             $res = model('Vod')->where($where)->update($update);
                             $color = 'green';
                             if ($res === false) {
@@ -927,7 +954,7 @@ class Collect extends Base {
                 }
             }
             if($show==1) {
-                mac_echo( ($k + 1) .'、'. $v['vod_name'] . "<font color=$color>" .$des .'</font>'. $msg.'' );
+                mac_echo( ($k + 1) .'、'. $v['vod_name'] . " <font color='{$color}'>" .$des .'</font>'. $msg.'' );
             }
             else{
                 return ['code'=>($color=='red' ? 1001 : 1),'msg'=>$des ];
@@ -1016,7 +1043,7 @@ class Collect extends Base {
         $html = mac_filter_tags($html);
         $json = json_decode($html,true);
         if(!$json){
-            return ['code'=>1002, 'msg'=>lang('model/collect/json_err')];
+            return ['code'=>1002, 'msg'=>lang('model/collect/json_err') . ': ' . mb_substr($html, 0, 15)];
         }
 
         $array_page = [];
@@ -1070,7 +1097,7 @@ class Collect extends Base {
         $type_list = model('Type')->getCache('type_list');
         $filter_arr = explode(',',$config['filter']); $filter_arr = array_filter($filter_arr);
         $pse_rnd = explode('#',$config['words']); $pse_rnd = array_filter($pse_rnd);
-        $pse_syn = mac_txt_explain($config['thesaurus']);
+        $pse_syn = mac_txt_explain($config['thesaurus'], true);
 
 
         foreach($data['data'] as $k=>$v){
@@ -1343,7 +1370,7 @@ class Collect extends Base {
         $html = mac_filter_tags($html);
         $json = json_decode($html,true);
         if(!$json){
-            return ['code'=>1002, 'msg'=>lang('model/collect/json_err')];
+            return ['code'=>1002, 'msg'=>lang('model/collect/json_err') . ': ' . mb_substr($html, 0, 15)];
         }
 
         $array_page = [];
@@ -1397,7 +1424,7 @@ class Collect extends Base {
         $type_list = model('Type')->getCache('type_list');
         $filter_arr = explode(',',$config['filter']); $filter_arr = array_filter($filter_arr);
         $pse_rnd = explode('#',$config['words']); $pse_rnd = array_filter($pse_rnd);
-        $pse_syn = mac_txt_explain($config['thesaurus']);
+        $pse_syn = mac_txt_explain($config['thesaurus'], true);
 
         foreach($data['data'] as $k=>$v){
 
@@ -1635,7 +1662,7 @@ class Collect extends Base {
         $html = mac_filter_tags($html);
         $json = json_decode($html,true);
         if(!$json){
-            return ['code'=>1002, 'msg'=>lang('model/collect/json_err')];
+            return ['code'=>1002, 'msg'=>lang('model/collect/json_err') . ': ' . mb_substr($html, 0, 15)];
         }
 
         $array_page = [];
@@ -1668,7 +1695,7 @@ class Collect extends Base {
 
         $filter_arr = explode(',',$config['filter']); $filter_arr = array_filter($filter_arr);
         $pse_rnd = explode('#',$config['words']); $pse_rnd = array_filter($pse_rnd);
-        $pse_syn = mac_txt_explain($config['thesaurus']);
+        $pse_syn = mac_txt_explain($config['thesaurus'], true);
 
         foreach($data['data'] as $k=>$v){
 
@@ -1934,7 +1961,7 @@ class Collect extends Base {
         $html = mac_filter_tags($html);
         $json = json_decode($html,true);
         if(!$json){
-            return ['code'=>1002, 'msg'=>lang('model/collect/json_err')];
+            return ['code'=>1002, 'msg'=>lang('model/collect/json_err') . ': ' . mb_substr($html, 0, 15)];
         }
 
         $array_page = [];
@@ -1988,7 +2015,7 @@ class Collect extends Base {
         $type_list = model('Type')->getCache('type_list');
         $filter_arr = explode(',',$config['filter']); $filter_arr = array_filter($filter_arr);
         $pse_rnd = explode('#',$config['words']); $pse_rnd = array_filter($pse_rnd);
-        $pse_syn = mac_txt_explain($config['thesaurus']);
+        $pse_syn = mac_txt_explain($config['thesaurus'], true);
 
         foreach($data['data'] as $k=>$v){
 
@@ -2224,7 +2251,7 @@ class Collect extends Base {
         $html = mac_filter_tags($html);
         $json = json_decode($html,true);
         if(!$json){
-            return ['code'=>1002, 'msg'=>lang('model/collect/json_err')];
+            return ['code'=>1002, 'msg'=>lang('model/collect/json_err') . ': ' . mb_substr($html, 0, 15)];
         }
 
         $array_page = [];
@@ -2257,7 +2284,7 @@ class Collect extends Base {
 
         $filter_arr = explode(',',$config['filter']); $filter_arr = array_filter($filter_arr);
         $pse_rnd = explode('#',$config['words']); $pse_rnd = array_filter($pse_rnd);
-        $pse_syn = mac_txt_explain($config['thesaurus']);
+        $pse_syn = mac_txt_explain($config['thesaurus'], true);
 
         foreach($data['data'] as $k=>$v){
 
@@ -2468,7 +2495,7 @@ class Collect extends Base {
     {
         $result = parse_url($url);
         if (empty($result['host']) || in_array($result['host'], ['127.0.0.1', 'localhost'])) {
-            return ['code' => 1001, 'msg' => lang('model/collect/cjurl_err')];
+            return ['code' => 1001, 'msg' => lang('model/collect/cjurl_err') . ': ' . $url];
         }
         return ['code' => 1];
     }

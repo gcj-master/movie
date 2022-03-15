@@ -5,6 +5,11 @@ class Alibaba
 {
     public $name = '阿里巴巴云存储';
     public $ver = '1.0';
+    private $config = [];
+
+    public function __construct($config = []) {
+        $this->config = $config;
+    }
 
     public function submit($file_path)
     {
@@ -36,7 +41,7 @@ class Alibaba
         curl_setopt($ch, CURLOPT_HTTPHEADER, $httpheader);
         curl_setopt($ch, CURLOPT_POST, 1);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-        curl_setopt($ch, CURLOPT_USERAGENT, 'iAliexpress/6.22.1 (iPhone; iOS 12.1.2; Scale/2.00)');
+        curl_setopt($ch, CURLOPT_USERAGENT, 'Dalvik/2.1.0 (Linux; U; Android 10; ONEPLUS A5010 Build/QKQ1.191014.012)');
         curl_setopt($ch, CURLOPT_ENCODING, "gzip");
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         $html = @curl_exec($ch);
@@ -45,7 +50,7 @@ class Alibaba
 
         if($json['code']=='0'){
             $file_path = $json['url'];
-            @unlink($filePath);
+            empty($this->config['keep_local']) && @unlink($filePath);
         }
 
         return $file_path;
