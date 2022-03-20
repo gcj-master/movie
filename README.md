@@ -53,7 +53,10 @@ root === A9U)oP]SXktA=(jWoAbA
  systemctl status crond //查看crontab状态
  参考 https://www.cnblogs.com/wucaiyun1/p/6866730.html    
 
-# 关于移动端手机横屏手机
+ ## 禁止IP访问    
+https://developer.aliyun.com/article/548497
+
+## 关于移动端手机横屏手机
 1. 默认使用m38u的资源，m38u资源可以使用本地播放器，添加播放器的方法 https://www.mytheme.cn/article/363.html, 默认使用DPlayer-H5播放器。关于手机不能横屏的解决方法 https://github.com/DIYgod/DPlayer/issues/429    
 ```javascript
 //手机全屏自动横屏
